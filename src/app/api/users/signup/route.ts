@@ -120,6 +120,55 @@ const authenticationService = new AuthenticationService();
  *                 message:
  *                   type: string
  *                   example: Invalid OTP
+ *   put:
+ *     tags:
+ *       - Users
+ *     summary: Resend verification OTP to both email and phone
+ *     description: Resends a verification OTP to both the email address and phone number of a user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - phoneNumber
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User's email address
+ *               phoneNumber:
+ *                 type: string
+ *                 description: User's phone number
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Verification OTP sent to both email and phone
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: Missing required fields
  */
 
 export async function POST(request: NextRequest) {
@@ -128,6 +177,14 @@ export async function POST(request: NextRequest) {
 
     if (!name || !email || !phoneNumber || !password) {
       throw new Error(Errors.MISSING_FIELDS.message);
+    }
+
+    // Validate name format
+    const nameRegex = /^[a-zA-Z\s]{3,50}$/;
+    if (!nameRegex.test(name)) {
+      throw new Error(
+        "Name must be 3-50 characters long and contain only letters and spaces"
+      );
     }
 
     // Validate email format
@@ -141,14 +198,7 @@ export async function POST(request: NextRequest) {
       throw new Error(Errors.INVALID_PHONE_NUMBER.message);
     }
 
-    const usernameRegex = config.validations.username.map((item) => ({
-      regex: new RegExp(item.regex),
-      message: item.message,
-      error: item.error,
-    }));
-    const invalidUsername = usernameRegex.find((r) => !r.regex.test(name));
-    if (invalidUsername) throw new Error(invalidUsername.message);
-
+    // Password validation
     const passwordRegex = config.validations.password.map((item) => ({
       regex: new RegExp(item.regex),
       message: item.message,
@@ -196,7 +246,10 @@ export async function PATCH(request: NextRequest) {
       throw new Error(Errors.PHONE_OR_EMAIL_REQUIRED.message);
     }
 
-    if (email) {
+    // If both email and phone are provided, verify them together
+    if (email && phoneNumber) {
+      await authenticationService.verifyEmailAndPhone(email, phoneNumber, otp);
+    } else if (email) {
       await authenticationService.verifyAccount(email, otp);
     } else if (phoneNumber) {
       await authenticationService.verifyPhoneNumber(phoneNumber, otp);
@@ -217,6 +270,45 @@ export async function PATCH(request: NextRequest) {
         message: error.message,
       },
       { status: error.status }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const authenticationService = new AuthenticationService();
+    const { email, phoneNumber } = await request.json();
+
+    if (!email || !phoneNumber) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message: Errors.MISSING_FIELDS.message,
+        },
+        { status: 400 }
+      );
+    }
+
+    const result = await authenticationService.resendVerificationOTP(
+      email,
+      phoneNumber
+    );
+
+    return NextResponse.json(
+      {
+        status: "success",
+        message: "Verification OTP sent to both email and phone",
+        data: result,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        status: "error",
+        message: error.message,
+      },
+      { status: 400 }
     );
   }
 }

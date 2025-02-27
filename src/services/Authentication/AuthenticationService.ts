@@ -50,24 +50,22 @@ export class AuthenticationService {
 
       const savedUser = await newUser.save();
 
-      // Generate and send OTP for both email and phone
-      const emailOtp = Helpers.generateOtp(
-        config.registeration.emailVerification.otpLength
-      );
-      const phoneOtp = Helpers.generateOtp(
+      // Generate single OTP for both email and phone verification
+      const verificationOtp = Helpers.generateOtp(
         config.registeration.emailVerification.otpLength
       );
 
       await User.findByIdAndUpdate(savedUser._id, {
-        emailVerificationOTP: emailOtp,
-        phoneVerificationOTP: phoneOtp,
+        emailVerificationOTP: verificationOtp,
+        phoneVerificationOTP: verificationOtp,
         verificationOTPExpiry:
           Date.now() +
           config.registeration.emailVerification.expiryInMinutes * 60 * 1000,
       });
 
-      await this.mailer.sendVerificationOTPEmail(email, emailOtp);
-      await this.smsService.sendVerificationOTP(phoneNumber, phoneOtp);
+      // Send the same OTP to both email and phone
+      await this.mailer.sendVerificationOTPEmail(email, verificationOtp);
+      await this.smsService.sendVerificationOTP(phoneNumber, verificationOtp);
 
       return savedUser;
     } catch (e) {
@@ -128,9 +126,7 @@ export class AuthenticationService {
         id: user._id,
         email: user.email,
         phoneNumber: user.phoneNumber,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
         admin: user.isAdmin,
       });
 
@@ -197,6 +193,113 @@ export class AuthenticationService {
         throw new Error(e.message);
       } else {
         console.error("An unknown error occurred while verifying phone number");
+        throw new Error(Errors.UNKNOWN_ERROR.message);
+      }
+    }
+  };
+
+  // New method to verify both email and phone together with the same OTP
+  verifyEmailAndPhone = async (
+    email: string,
+    phoneNumber: string,
+    otp: string
+  ) => {
+    try {
+      const user = await User.findOne({
+        email,
+        phoneNumber,
+      });
+
+      if (!user) {
+        throw new Error(Errors.INVALID_USER.message);
+      }
+
+      // Check if either email or phone is already verified
+      if (user.isEmailVerified && user.isPhoneVerified) {
+        throw new Error("Both email and phone are already verified.");
+      }
+
+      // Verify that the OTP matches (should be the same for both)
+      if (
+        user.emailVerificationOTP !== otp ||
+        user.phoneVerificationOTP !== otp
+      ) {
+        throw new Error(Errors.INVALID_OTP.message);
+      }
+
+      // Check if OTP is expired
+      if (user.verificationOTPExpiry < Date.now()) {
+        throw new Error(Errors.OTP_EXPIRED.message);
+      }
+
+      // Verify both email and phone
+      user.isEmailVerified = true;
+      user.isPhoneVerified = true;
+      user.isActive = true;
+
+      await user.save();
+
+      return {
+        success: true,
+        message: "Email and phone verified successfully",
+      };
+    } catch (e) {
+      if (e instanceof Error) {
+        console.error(e.message, "while verifying email and phone");
+        throw new Error(e.message);
+      } else {
+        console.error(
+          "An unknown error occurred while verifying email and phone"
+        );
+        throw new Error(Errors.UNKNOWN_ERROR.message);
+      }
+    }
+  };
+
+  // Method to resend OTP to both email and phone
+  resendVerificationOTP = async (email: string, phoneNumber: string) => {
+    try {
+      const user = await User.findOne({ email, phoneNumber });
+
+      if (!user) {
+        throw new Error(Errors.INVALID_USER.message);
+      }
+
+      if (user.isEmailVerified && user.isPhoneVerified) {
+        throw new Error("Both email and phone are already verified");
+      }
+
+      // Generate single OTP for both email and phone verification
+      const verificationOtp = Helpers.generateOtp(
+        config.registeration.emailVerification.otpLength
+      );
+
+      // Update the user with new OTP
+      user.emailVerificationOTP = verificationOtp;
+      user.phoneVerificationOTP = verificationOtp;
+      user.verificationOTPExpiry = new Date(
+        Date.now() +
+          config.registeration.emailVerification.expiryInMinutes * 60 * 1000
+      );
+
+      await user.save();
+
+      // Send the same OTP to both email and phone
+      await this.mailer.sendVerificationOTPEmail(email, verificationOtp);
+      await this.smsService.sendVerificationOTP(phoneNumber, verificationOtp);
+
+      return {
+        success: true,
+        message: "Verification OTP sent to both email and phone",
+      };
+    } catch (e) {
+      if (e instanceof Error) {
+        console.error(e.message, "while resending verification OTP");
+        throw new Error(e.message);
+      } else {
+        console.error(
+          "An unknown error occurred while resending verification OTP"
+        );
         throw new Error(Errors.UNKNOWN_ERROR.message);
       }
     }

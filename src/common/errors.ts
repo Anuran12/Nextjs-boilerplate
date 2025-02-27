@@ -147,6 +147,19 @@ class Errors {
     message: "Username already exists",
     status: 400,
   };
+  static readonly NAME_LENGTH_ERROR = {
+    message: "Name must be between 3 and 50 characters",
+    status: 400,
+  };
+  static readonly NAME_INVALID_CHARACTER_ERROR = {
+    message: "Name must contain only letters and spaces",
+    status: 400,
+  };
+  static readonly NAME_FORMAT_ERROR = {
+    message:
+      "Name must be 3-50 characters long and contain only letters and spaces",
+    status: 400,
+  };
 }
 
 export default Errors;

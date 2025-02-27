@@ -231,15 +231,15 @@ export default function SignupForm() {
           </h2>
 
           <div className="form-group">
-            <label>Enter OTP</label>
             <input
               type="text"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               className="w-full px-3 lg:px-4 py-2.5 lg:py-3.5 border border-white/30 rounded-full bg-transparent focus:bg-transparent focus:outline-none focus:ring-2 focus:ring-[#F8623A] focus:border-transparent text-white placeholder:text-gray-500"
-              placeholder="Enter OTP"
+              placeholder=""
               required
             />
+            <label>Enter OTP</label>
           </div>
 
           {error && <p className="text-red-500 text-sm">{error}</p>}

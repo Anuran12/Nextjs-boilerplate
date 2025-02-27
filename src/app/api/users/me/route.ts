@@ -23,9 +23,7 @@ export async function GET(request: NextRequest) {
         id: decodedToken.id,
         email: decodedToken.email,
         phoneNumber: decodedToken.phoneNumber,
-        username: decodedToken.username,
-        firstName: decodedToken.firstName,
-        lastName: decodedToken.lastName,
+        name: decodedToken.name,
         admin: decodedToken.admin,
       },
     });

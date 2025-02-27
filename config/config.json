@@ -75,6 +75,18 @@
         "message": "Username must contain only alphanumeric characters",
         "error": "invalidCharacterError"
       }
+    ],
+    "name": [
+      {
+        "regex": "^(?=.{3,50}$)",
+        "message": "Name must be between 3 and 50 characters",
+        "error": "nameLengthError"
+      },
+      {
+        "regex": "^[a-zA-Z\\s]*$",
+        "message": "Name must contain only letters and spaces",
+        "error": "invalidCharacterError"
+      }
     ]
   },
   "other": {

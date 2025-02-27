@@ -12,6 +12,8 @@ export default function UserDetails() {
         const res = await fetch("/api/users/me");
         const data = await res.json();
 
+        console.log(data);
+
         if (data.success) {
           setUser(data.user);
         }
@@ -50,14 +52,10 @@ export default function UserDetails() {
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4">Welcome, {user.firstName}!</h2>
+      <h2 className="text-2xl font-bold mb-4">Welcome, {user.name}!</h2>
       <div className="space-y-2">
         <p>
-          <span className="font-semibold">Name:</span> {user.firstName}{" "}
-          {user.lastName}
-        </p>
-        <p>
-          <span className="font-semibold">Username:</span> {user.username}
+          <span className="font-semibold">Name:</span> {user.name}
         </p>
         <p>
           <span className="font-semibold">Email:</span> {user.email}
