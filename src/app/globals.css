@@ -63,11 +63,10 @@ input:-webkit-autofill:active {
 html,
 body {
   height: 100%; /* Ensure the body takes full height */
-  overflow: hidden; /* Prevent overflow */
+  overflow-y: auto; /* Allow vertical scrolling */
 }
 
 .container {
-  height: 100vh; /* Use viewport height */
-  max-height: 100%; /* Prevent overflow due to browser UI */
+  min-height: 100vh; /* Use viewport height */
   overflow-y: auto; /* Allow scrolling within the container */
 }
