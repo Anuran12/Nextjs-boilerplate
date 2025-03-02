@@ -4,6 +4,8 @@ import { useState } from "react";
 import google from "@/assets/iconGoogle.svg";
 import facebook from "@/assets/btnSigninwithFb.svg";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface LoginFormData {
   identifier: string;
@@ -17,6 +19,8 @@ export default function LoginForm() {
   });
   const [error, setError] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,33 +29,88 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
-      const res = await fetch("/api/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          // Check if identifier is email, phone, or username
-          ...(formData.identifier.includes("@")
-            ? { email: formData.identifier }
-            : formData.identifier.match(/^\+?[1-9]\d{1,14}$/)
-            ? { phoneNumber: formData.identifier }
-            : { username: formData.identifier }),
-          password: formData.password,
-        }),
+      // Use NextAuth signIn with credentials
+      const result = await signIn("credentials", {
+        identifier: formData.identifier,
+        password: formData.password,
+        redirect: false,
       });
 
-      const data = await res.json();
-
-      if (!data.success) {
-        setError(data.message);
+      if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
         return;
       }
 
       // Redirect to home page after successful login
-      window.location.href = "/";
-    } catch {
+      router.push("/");
+    } catch (error) {
+      console.error("Login error:", error);
       setError("An error occurred during login");
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Use redirect: true to allow the NextAuth flow to handle redirects
+      await signIn("google", {
+        callbackUrl: "/",
+        redirect: true,
+      }).then((result) => {
+        // This code won't run on client-side due to redirect
+        // But it helps if redirect doesn't work for some reason
+        if (result?.error) {
+          console.error("Google sign-in result error:", result.error);
+          setError(
+            "An error occurred during Google sign-in. Please try again."
+          );
+          setIsLoading(false);
+        }
+      });
+
+      // The above should redirect, so code below shouldn't execute
+      // unless there's an error or redirect fails
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setError("An error occurred during Google sign-in. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  const handleFacebookSignIn = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Use redirect: true to allow the NextAuth flow to handle redirects
+      await signIn("facebook", {
+        callbackUrl: "/",
+        redirect: true,
+      }).then((result) => {
+        // This code won't run on client-side due to redirect
+        // But it helps if redirect doesn't work for some reason
+        if (result?.error) {
+          console.error("Facebook sign-in result error:", result.error);
+          setError(
+            "An error occurred during Facebook sign-in. Please try again."
+          );
+          setIsLoading(false);
+        }
+      });
+
+      // The above should redirect, so code below shouldn't execute
+      // unless there's an error or redirect fails
+    } catch (error) {
+      console.error("Facebook sign-in error:", error);
+      setError("An error occurred during Facebook sign-in. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -140,9 +199,10 @@ export default function LoginForm() {
 
         <button
           type="submit"
-          className="w-full bg-[#F8623A] text-white px-4 py-[0.75rem] rounded-full hover:bg-[#F8623A]/80 font-semibold text-xl"
+          disabled={isLoading}
+          className="w-full bg-[#F8623A] text-white px-4 py-[0.75rem] rounded-full hover:bg-[#F8623A]/80 font-semibold text-xl disabled:opacity-70"
         >
-          Sign In
+          {isLoading ? "Signing In..." : "Sign In"}
         </button>
       </form>
       <div className="flex items-center gap-4 w-full">
@@ -151,13 +211,19 @@ export default function LoginForm() {
         <div className="h-[1.5px] bg-white/70 flex-grow"></div>
       </div>
       <div className="flex gap-4 w-full">
-        <button className="w-full bg-white text-black px-4 py-2 rounded-full font-normal lg:text-xl flex items-center justify-center gap-2">
+        <button
+          onClick={handleGoogleSignIn}
+          disabled={isLoading}
+          className="w-full bg-white text-black px-4 py-2 rounded-full font-normal lg:text-xl flex items-center justify-center gap-2 disabled:opacity-70"
+        >
           <Image src={google} alt="Google" width={20} height={20} />
           Google
         </button>
         <button
-          type="submit"
-          className="w-full bg-white text-black px-4 py-2 rounded-full font-normal lg:text-xl flex items-center justify-center gap-2"
+          type="button"
+          onClick={handleFacebookSignIn}
+          disabled={isLoading}
+          className="w-full bg-white text-black px-4 py-2 rounded-full font-normal lg:text-xl flex items-center justify-center gap-2 disabled:opacity-70"
         >
           <Image src={facebook} alt="Facebook" width={20} height={20} />
           Facebook

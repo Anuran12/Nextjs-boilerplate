@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import google from "@/assets/iconGoogle.svg";
 import facebook from "@/assets/btnSigninwithFb.svg";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface SignupFormData {
   name: string;
@@ -23,6 +25,8 @@ export default function SignupForm() {
   const [showOtpForm, setShowOtpForm] = useState(false);
   const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -31,6 +35,7 @@ export default function SignupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       const res = await fetch("/api/users/signup", {
@@ -50,12 +55,15 @@ export default function SignupForm() {
     } catch (err) {
       console.error("Signup error:", err);
       setError("An error occurred during signup");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       const res = await fetch("/api/users/signup", {
@@ -75,10 +83,72 @@ export default function SignupForm() {
         return;
       }
 
-      window.location.href = "/login";
+      router.push("/login?verify=success");
     } catch (err) {
       console.error("Verification error:", err);
       setError("An error occurred during verification");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Use redirect: true to allow the NextAuth flow to handle redirects
+      await signIn("google", {
+        callbackUrl: "/",
+        redirect: true,
+      }).then((result) => {
+        // This code won't run on client-side due to redirect
+        // But it helps if redirect doesn't work for some reason
+        if (result?.error) {
+          console.error("Google sign-in result error:", result.error);
+          setError(
+            "An error occurred during Google sign-in. Please try again."
+          );
+          setIsLoading(false);
+        }
+      });
+
+      // The above should redirect, so code below shouldn't execute
+      // unless there's an error or redirect fails
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setError("An error occurred during Google sign-in. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  const handleFacebookSignIn = async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Use redirect: true to allow the NextAuth flow to handle redirects
+      await signIn("facebook", {
+        callbackUrl: "/",
+        redirect: true,
+      }).then((result) => {
+        // This code won't run on client-side due to redirect
+        // But it helps if redirect doesn't work for some reason
+        if (result?.error) {
+          console.error("Facebook sign-in result error:", result.error);
+          setError(
+            "An error occurred during Facebook sign-in. Please try again."
+          );
+          setIsLoading(false);
+        }
+      });
+
+      // The above should redirect, so code below shouldn't execute
+      // unless there's an error or redirect fails
+    } catch (error) {
+      console.error("Facebook sign-in error:", error);
+      setError("An error occurred during Facebook sign-in. Please try again.");
+      setIsLoading(false);
     }
   };
 
@@ -190,9 +260,10 @@ export default function SignupForm() {
 
           <button
             type="submit"
-            className="w-full bg-[#F8623A] text-white px-3 lg:px-4 py-[0.75rem] rounded-full hover:bg-[#F8623A]/80 font-semibold text-lg lg:text-xl"
+            disabled={isLoading}
+            className="w-full bg-[#F8623A] text-white px-3 lg:px-4 py-[0.75rem] rounded-full hover:bg-[#F8623A]/80 font-semibold text-lg lg:text-xl disabled:opacity-70"
           >
-            Sign Up
+            {isLoading ? "Signing Up..." : "Sign Up"}
           </button>
 
           <div className="flex items-center gap-2 lg:gap-4 w-full my-4">
@@ -204,13 +275,20 @@ export default function SignupForm() {
           </div>
 
           <div className="flex gap-4 w-full">
-            <button className="w-full bg-white text-black px-4 py-2 rounded-full font-normal lg:text-xl flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full bg-white text-black px-4 py-2 rounded-full font-normal lg:text-xl flex items-center justify-center gap-2 disabled:opacity-70"
+            >
               <Image src={google} alt="Google" width={20} height={20} />
               Google
             </button>
             <button
-              type="submit"
-              className="w-full bg-white text-black px-4 py-2 rounded-full font-normal lg:text-xl flex items-center justify-center gap-2"
+              type="button"
+              onClick={handleFacebookSignIn}
+              disabled={isLoading}
+              className="w-full bg-white text-black px-4 py-2 rounded-full font-normal lg:text-xl flex items-center justify-center gap-2 disabled:opacity-70"
             >
               <Image src={facebook} alt="Facebook" width={20} height={20} />
               Facebook
@@ -246,9 +324,10 @@ export default function SignupForm() {
 
           <button
             type="submit"
-            className="w-full bg-[#F8623A] text-white px-3 lg:px-4 py-2.5 lg:py-3.5 rounded-full hover:bg-[#F8623A]/80 font-semibold text-lg lg:text-xl"
+            disabled={isLoading}
+            className="w-full bg-[#F8623A] text-white px-3 lg:px-4 py-2.5 lg:py-3.5 rounded-full hover:bg-[#F8623A]/80 font-semibold text-lg lg:text-xl disabled:opacity-70"
           >
-            Verify OTP
+            {isLoading ? "Verifying..." : "Verify OTP"}
           </button>
         </form>
       )}

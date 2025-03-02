@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import Image from "next/image";
 
 // Components
 import UserProfile from "../components/UserProfile";
 import OfferCard from "../components/OfferCard";
 import ServiceCard from "../components/ServiceCard";
-import Image from "next/image";
+import Header from "@/components/Header";
 import Logo from "@/assets/Logo2.svg";
 import Insta from "@/assets/instagram.svg";
 
@@ -25,20 +25,8 @@ import service6 from "@/assets/services/service6.png"; // PAINTING
 export default function Home() {
   return (
     <div className="bg-black text-white">
-      {/* Header */}
-      <header className="flex justify-between items-center p-4 sm:p-6 md:p-8">
-        <div className="flex items-center">
-          <Image src={Logo} alt="Logo" className="w-[55%] h-auto" />
-        </div>
-        <div className="flex items-center gap-4 md:gap-6">
-          <Link href="#" aria-label="Instagram">
-            <Image src={Insta} alt="Instagram" className="w-8 h-8" />
-          </Link>
-          <button aria-label="Menu" className="text-white">
-            <Menu size={24} />
-          </button>
-        </div>
-      </header>
+      {/* Use the new Header component */}
+      <Header />
 
       <main className="px-4 pb-8 sm:px-6 md:px-8 lg:pb-12">
         {/* User Profile - Centered on larger screens */}
@@ -48,7 +36,7 @@ export default function Home() {
               name="Anmol Choudhury"
               vehicle="Tata Nexon"
               vehicleId="KA01MBG578"
-              imageUrl="/Logo.png"
+              imageUrl="/Logo.svg"
             />
           </div>
         </div>

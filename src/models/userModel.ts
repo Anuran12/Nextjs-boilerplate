@@ -11,18 +11,16 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, "Please enter your email"],
-      unique: true,
       max: 255,
       min: 6,
     },
     phoneNumber: {
       type: String,
-      required: [true, "Please enter your phone number"],
-      unique: true,
+      required: false,
     },
     password: {
       type: String,
-      required: [true, "Please enter your password"],
+      required: false,
       max: 1024,
       min: 5,
     },
@@ -36,13 +34,22 @@ const userSchema = new mongoose.Schema(
     },
     isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     isAdmin: {
       type: Boolean,
       default: false,
     },
     mfa_enabled: {
+      type: Boolean,
+      default: false,
+    },
+    provider: {
+      type: String,
+      enum: ["credentials", "google", "facebook"],
+      default: "credentials",
+    },
+    isVerified: {
       type: Boolean,
       default: false,
     },
@@ -71,7 +78,10 @@ userSchema.index(
   { phoneNumber: 1 },
   {
     unique: true,
-    partialFilterExpression: { phoneNumber: { $ne: null } },
+    partialFilterExpression: {
+      phoneNumber: { $exists: true, $ne: null },
+      $and: [{ phoneNumber: { $ne: "" } }],
+    },
   }
 );
 
