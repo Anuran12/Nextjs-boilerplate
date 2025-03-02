@@ -1,13 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 
 // Components
 import UserProfile from "../components/UserProfile";
 import OfferCard from "../components/OfferCard";
 import ServiceCard from "../components/ServiceCard";
 import Header from "@/components/Header";
-import Logo from "@/assets/Logo2.svg";
-import Insta from "@/assets/instagram.svg";
 
 // Import offer images
 import offer1 from "@/assets/offers/offer1.png";

@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import User from "@/models/userModel";
 import clientPromise from "@/lib/mongodb"; // Create this file
 import { AuthenticationService } from "@/services/Authentication/AuthenticationService";
+import { MongoClient } from "mongodb";
 
 // Connect to MongoDB
 dbConnect();
@@ -98,11 +99,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  adapter: MongoDBAdapter(clientPromise as any),
+  adapter: MongoDBAdapter(clientPromise as Promise<MongoClient>),
   session: { strategy: "jwt" },
   debug: process.env.NODE_ENV === "development",
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       console.log("Sign in callback triggered", {
         user: user?.email,
         provider: account?.provider,

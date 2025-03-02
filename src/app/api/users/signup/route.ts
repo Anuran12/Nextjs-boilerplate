@@ -302,13 +302,15 @@ export async function PUT(request: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
       {
         status: "error",
-        message: error.message,
+        message: errorMessage,
       },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }
